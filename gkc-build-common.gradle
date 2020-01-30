@@ -1,0 +1,77 @@
+apply plugin: 'eclipse'
+apply plugin: 'maven-publish'
+apply plugin: 'jacoco'
+
+/**
+ * Remote Maven repositories for dependency resolution.
+ */
+repositories {
+    mavenLocal()
+        
+    maven {
+        name = 'gkc'
+        credentials {
+            username = 'admin'
+            password = 'admin123'
+        }
+        url 'http://build.gkcweb.com/repository/gkc/'
+    }
+	
+	maven {
+        name = 'maven-public'
+        credentials {
+            username = 'admin'
+            password = 'admin123'
+        }
+        url 'http://build.gkcweb.com/repository/maven-public/'
+    }
+}
+
+/**
+ * Maven repository for publishing the project artifacts.
+ */
+publishing {
+    repositories {
+        maven {
+            name = 'gkc-publish'
+            credentials {
+                username = 'admin'
+                password = 'admin123'
+            }
+            if(project.build.contains('SNAPSHOT')) {
+                url "http://build.gkcweb.com/repository/gkc-snapshot"
+            }else if(project.build.contains('RELEASE')) {
+                url "http://build.gkcweb.com/repository/gkc-release"
+            }else {
+                url "http://build.gkcweb.com/repository/gkc-internal"
+            }
+        }
+    }
+}
+
+/**
+ * Configuration for the Java Code Coverage analysis tool (JaCoCo).
+ */
+if (project.properties['sourceSets'] != null) {
+    jacoco {
+        toolVersion = "0.7.9"
+        reportsDir = file("$buildDir/reports/jacoco")
+    }
+    test {
+        jacoco {
+            append = true
+            destinationFile = file("$buildDir/jacoco/test.exec")
+            classDumpDir = file("$buildDir/jacoco/classpathdumps")
+        }
+    }
+    jacocoTestReport {
+        group = "Reporting"
+        description = "Generate Jacoco coverage reports after running tests."
+        additionalSourceDirs = files(sourceSets.main.allJava.srcDirs)
+        reports {
+            xml.enabled true
+            csv.enabled false
+        }
+    }
+}
+
